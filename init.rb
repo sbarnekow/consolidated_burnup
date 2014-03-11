@@ -1,0 +1,1 @@
+MinglePlugins::Macros.register(ConsolidatedBurnupChart, 'consolidated_burnup_chart')

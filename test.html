@@ -1,0 +1,20 @@
+<HTML><head></head><body>
+
+      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+      <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable( [["Day","Amount"],["2014-01-09T00:00:00+00:00",0],["2014-01-10T00:00:00+00:00",1000],["2014-01-11T00:00:00+00:00",1170],["2014-01-12T00:00:00+00:00",1220],["2014-01-13T00:00:00+00:00",1300]] );
+
+        var options = {
+          title: 'Test Chart',
+          trendlines: { 0: {} }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+        }
+      </script>
+  
