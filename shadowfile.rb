@@ -1,5 +1,7 @@
 require 'date'
 require 'json'
+require 'uri'
+require 'net/http'
 
 # date_array = [DateTime.new(2014, 1, 10)]
 
@@ -25,7 +27,7 @@ def render_chart(render_this)
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
       function drawChart() {
-        var data = google.visualization.arrayToDataTable( #{render_this.to_json} );
+        var data = google.visualization.arrayToDataTable( #{render_this.to_json} ); 
 
         var options = {
           title: 'Test Chart',
@@ -40,10 +42,37 @@ def render_chart(render_this)
 end
 
 def retrieve_data
-  #get a set of data for each project, using date array
-  #push that set of date to the corresponding arrays within data_array
-  #for project 1 would go to [1][1], [2][1], [3][1], [4][1] 
-  #project 2 would go to [1][2], [2][2], [3][2], [4][2]
+    #below is stubbed data
+    # date = "2014-01-10" #this will eventually be date_array
+    # project_array = ["cc", "cc1"] #this will eventually be parameters['projects']
+    
+    # future_date_array = []
+
+    # project_array.each do |project|
+      
+    #   uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
+
+    #   http = Net::HTTP.new(uri.host, uri.port)
+    #   request = Net::HTTP::Get.new(uri.request_uri)
+      
+    #   #stubbed MQL
+    #   request.form_data = {:mql => 'SELECT project, SUM("Story Points") WHERE type=Story AND SimpleStatus = Done AND "Date Accepted" <= "1/1/2014"'}
+      
+    #   #MQL will take a string, interpolation isnt working :( 
+    #   response = http.request(request)   
+
+    #   #creates the structure for the required dataset   
+    #   future_date_array.push(response.body)
+    # end
+
+    #get a set of data for each project, using date array
+    #push that set of date to the corresponding arrays within data_array
+    #for project 1 would go to [1][1], [2][1], [3][1], [4][1] 
+    #project 2 would go to [1][2], [2][2], [3][2], [4][2]
+
+    #dates and values will only be strings
+
+
     return data_array = [
             ['Day', 'Amount'],
             [DateTime.parse('2014/1/09'),  0],
@@ -51,15 +80,8 @@ def retrieve_data
             [DateTime.parse('2014/1/11'),  1170],
             [DateTime.parse('2014/1/12'),  1220],
             [DateTime.parse('2014/1/13'),  1300]
-        ]
+    ]
 end
-
-
-# DateTime.parse('2014/1/1')
-# def execute
-#     data_to_render = retrieve_data
-#     puts render_chart(data_to_render)
-# end
 
 
 outfile = File.open('/Users/thoughtworker/Mingle/mingle_13_4_2/vendor/plugins/consolidated_burnup_chart/test.html', 'w')
