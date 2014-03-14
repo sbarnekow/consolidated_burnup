@@ -42,7 +42,7 @@ def render_chart(render_this)
 end
 
 def retrieve_data
-    # below is stubbed data
+    # # below is stubbed data
     # date = '"2014-01-10"' #this will eventually be date_array
     # project_array = ["cc", "dvip", "bid"] #this will eventually be parameters['projects']
     # query = 'SELECT project, SUM("Story Points") WHERE type=Story AND SimpleStatus = Done AND "Date Accepted" <= '
@@ -69,6 +69,7 @@ def retrieve_data
     # end
 
     # puts future_date_array
+    
     # get a set of data for each project, using date array
     # push that set of date to the corresponding arrays within data_array
     # for project 1 would go to [1][1], [2][1], [3][1], [4][1] 
