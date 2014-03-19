@@ -7,9 +7,9 @@
       google.setOnLoadCallback(drawChart);
       var arr = [["2014-01-09", 0], ["2014-01-10", 1000], ["2014-01-11", 1170], ["2014-01-12", 1220], ["2014-01-13", 1300]]
       function drawChart() {
-        for (var i=0; i< data_array.length; i++)
+        for (var i=0; i< arr.length; i++)
           { 
-            var wholeDate = data_array[i][0]
+            var wholeDate = arr[i][0]
             var date 
             var year = parseInt(wholeDate.substring(0,4))
             var month = parseInt(wholeDate.substring(5,7))

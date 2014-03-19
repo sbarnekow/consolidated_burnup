@@ -3,20 +3,17 @@ require 'json'
 require 'uri'
 require 'net/http'
 
-start_date = Date.parse('17-03-2014')
-date_array = [start_date]
+date_array = [DateTime.new(2014, 1, 10)]
 
-def get_dates(date_array)
-  end_date = Date.parse('30-03-2014')
-  new_date = date_array[-1] + 5
+def get_dates(array_of_dates)
+  new_date = array_of_dates[-1] + 5
 
-  if new_date <= end_date
-    date_array.push(new_date)
-    get_dates(date_array)
+  if new_date < (DateTime.new(2014, 1, 23))
+    array_of_dates.push(new_date)
+    get_dates(array_of_dates)
   else
-    date_array.push(end_date)
-    date_array.each {|x| x.to_s}
-    return  date_array.sort!
+    array_of_dates.push(DateTime.new(2014, 1, 23))
+    return array_of_dates.sort!
   end
 
 end
@@ -31,9 +28,9 @@ def render_chart(render_this)
       google.setOnLoadCallback(drawChart);
       var arr = #{render_this}
       function drawChart() {
-        for (var i=0; i< data_array.length; i++)
+        for (var i=0; i< arr.length; i++)
           { 
-            var wholeDate = data_array[i][0]
+            var wholeDate = arr[i][0]
             var date 
             var year = parseInt(wholeDate.substring(0,4))
             var month = parseInt(wholeDate.substring(5,7))
