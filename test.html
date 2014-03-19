@@ -1,25 +1,21 @@
 <HTML><head></head><body>
 
-      <div id="chart_div" style="width: 900px; height: 500px;"></div>
-      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-      <script type="text/javascript">
+    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
-      var arr = [["2014-01-09", 0], ["2014-01-10", 1000], ["2014-01-11", 1170], ["2014-01-12", 1220], ["2014-01-13", 1300]]
       function drawChart() {
-        for (var i=0; i< arr.length; i++)
-          { 
-            var wholeDate = arr[i][0]
-            var date 
-            var year = parseInt(wholeDate.substring(0,4))
-            var month = parseInt(wholeDate.substring(5,7))
-            var day = parseInt(wholeDate.substring(8,10))
-                
-             console.log(year)
-             console.log(month)
-             console.log(day)
-          }
-        }
+        var data = google.visualization.arrayToDataTable(
+            [["Date", "Consumer - Carfax.com", "Dealer - VIP", "BI - Dealer"], ["2014-02-05", 283, 505, 137], ["2014-02-10", 301, 544, 148], ["2014-02-15", 329, 591, 158], ["2014-02-20", 329, 627, 166], ["2014-02-25", 329, 646, 179], ["2014-03-02", 329, 701, 203], ["2014-03-07", 329, 705, 203], ["2014-03-12", 329, 705, 203], ["2014-03-17", 329, 705, 203], ["2014-03-20", 329, 705, 203]]
+        );
 
-      </script>
+        var options = {
+          title: 'Consolidated Burn Down'
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
   
