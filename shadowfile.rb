@@ -3,17 +3,20 @@ require 'json'
 require 'uri'
 require 'net/http'
 
-date_array = [DateTime.new(2014, 1, 10)]
+start_date = Date.parse('17-03-2014')
+date_array = [start_date]
 
-def get_dates(array_of_dates)
-  new_date = array_of_dates[-1] + 5
+def get_dates(date_array)
+  end_date = Date.parse('30-03-2014')
+  new_date = date_array[-1] + 5
 
-  if new_date < (DateTime.new(2014, 1, 23))
-    array_of_dates.push(new_date)
-    get_dates(array_of_dates)
+  if new_date <= end_date
+    date_array.push(new_date)
+    get_dates(date_array)
   else
-    array_of_dates.push(DateTime.new(2014, 1, 23))
-    return array_of_dates.sort!
+    date_array.push(end_date)
+    date_array.each {|x| x.to_s}
+    return  date_array.sort!
   end
 
 end
@@ -26,20 +29,48 @@ def render_chart(render_this)
       <script type="text/javascript">
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
+      var arr = #{render_this}
       function drawChart() {
-        var data = google.visualization.arrayToDataTable( #{render_this.to_json} ); 
-
-        var options = {
-          title: 'Test Chart',
-          trendlines: { 0: {} }
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
+        for (var i=0; i< data_array.length; i++)
+          { 
+            var wholeDate = data_array[i][0]
+            var date 
+            var year = parseInt(wholeDate.substring(0,4))
+            var month = parseInt(wholeDate.substring(5,7))
+            var day = parseInt(wholeDate.substring(8,10))
+                
+             console.log(year)
+             console.log(month)
+             console.log(day)
+          }
         }
+
       </script>
   }
 end
+
+# divToWrite.appendChild(content);
+# divToWrite.appendChild(spaceBreak);
+
+ # var data = google.visualization.arrayToDataTable( #{render_this.to_json} ); 
+
+ # var data = google.visualization.arrayToDataTable([
+ #            ['Day', 'Amount'],
+ #            [new Date(2014, 1, 09),  0],
+ #            [new Date(2014, 1, 10),  1000],
+ #            [new Date(2014, 1, 11),  1170],
+ #            [new Date(2014, 1, 12),  1220],
+ #            [new Date(2014, 1, 13),  1300]
+ #          ]);
+
+     # var options = {
+     #      title: 'Test Chart',
+     #      trendlines: { 0: {} }
+     #    };
+
+# var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+#         chart.draw(data, options);
+
 
 def retrieve_data
     # # below is stubbed data
@@ -79,14 +110,27 @@ def retrieve_data
 
 
     return data_array = [
-            ['Day', 'Amount'],
-            [DateTime.parse('2014/1/09'),  0],
-            [DateTime.parse('2014/1/10'),  1000],
-            [DateTime.parse('2014/1/11'),  1170],
-            [DateTime.parse('2014/1/12'),  1220],
-            [DateTime.parse('2014/1/13'),  1300]
+            # ['Day', 'Amount'],
+            ['2014-01-09',  0],
+            ['2014-01-10',  1000],
+            ['2014-01-11',  1170],
+            ['2014-01-12',  1220],
+            ['2014-01-13',  1300]
     ]
 end
+
+
+
+    # return data_array = [
+    #         ['Day', 'Amount'],
+    #         [DateTime.parse('2014/1/09'),  0],
+    #         [DateTime.parse('2014/1/10'),  1000],
+    #         [DateTime.parse('2014/1/11'),  1170],
+    #         [DateTime.parse('2014/1/12'),  1220],
+    #         [DateTime.parse('2014/1/13'),  1300]
+    # ]
+
+    puts get_dates(date_array)
 
 
 outfile = File.open('/Users/thoughtworker/Mingle/mingle_13_4_2/vendor/plugins/consolidated_burnup_chart/test.html', 'w')
