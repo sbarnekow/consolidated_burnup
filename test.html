@@ -3,15 +3,18 @@
     <div id="chart_div" style="width: 900px; height: 500px;"></div>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
+
+      var rubyData = [["Date", "Scope", "Completed Scope", "Actual Scope"], ["2014-02-01", 0, 0, 0], ["2014-02-05", 1807, 181, 942], ["2014-02-10", 1883, 160, 1011], ["2014-02-15", 2000, 248, 1079], ["2014-02-20", 2040, 246, 1141], ["2014-02-25", 2089, 248, 1179], ["2014-03-02", 2152, 214, 1257], ["2014-03-07", 2181, 225, 1274], ["2014-03-12", 2181, 225, 1274], ["2014-03-17", 2181, 225, 1274], ["2014-03-20", 2181, 225, 1274]];
+    
+
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
       function drawChart() {
-        var data = google.visualization.arrayToDataTable(
-            [["Date", "Consumer - Carfax.com", "Dealer - VIP", "BI - Dealer"], ["2014-02-05", 283, 505, 137], ["2014-02-10", 301, 544, 148], ["2014-02-15", 329, 591, 158], ["2014-02-20", 329, 627, 166], ["2014-02-25", 329, 646, 179], ["2014-03-02", 329, 701, 203], ["2014-03-07", 329, 705, 203], ["2014-03-12", 329, 705, 203], ["2014-03-17", 329, 705, 203], ["2014-03-20", 329, 705, 203]]
-        );
+        var data = google.visualization.arrayToDataTable( rubyData );
 
         var options = {
-          title: 'Consolidated Burn Down'
+          title: 'Consolidated Burn Up',
+          trendlines: { 0: {} }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
