@@ -4,53 +4,24 @@ require 'net/http'
 require 'time'
 require 'date'
 
-@series_info = { "cc" => {
-        :total_scope_query => "select sum('story points') where type=story", 
-        :completed_scope_query => "select sum('story points') where type=story and status = completed"
-        },
-        "test" => {
-        :total_scope_query => "select sum('story points') where type=story", 
-        :completed_scope_query => "select sum('story points') where type=story and status = completed"
-        }
+def format_parameters(params)
+  project_query_hash = {}
+ 
+  params['series'].each do |project|
+    project_query_hash << { project['project-name'] => {
+      :total_scope_query => project['scope-query'], 
+      :completed_scope_query => project['completion-scope-query'], 
+      :actual_scope_query => project['actual-scope-query']
       }
+    }
+  end
 
-def scope
- project_array =  @series_info.keys
-    # project_date_constructor = {}
-
-    @date_array.each do |date|
-      
-      # consolidated_points = 0
-      # project_date_constructor[date] ||= {}
-
-      # whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story"
-        
-        @series_info.each do |project|
-          uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
-
-          http = Net::HTTP.new(uri.host, uri.port)
-          request = Net::HTTP::Get.new(uri.request_uri)
-
-          whole_query = project[0][:total_scope_query]
-          
-          request.form_data = {:mql => whole_query}
-          
-          response = http.request(request)     
-          body = response.body
-
-          obj = JSON.parse(body).first
-
-          return obj
-  
-          # consolidated_points += obj["Sum Story Points"].to_i
-
-          # project_date_constructor[date] = consolidated_points
-        end
-    end
+  return project_query_hash
 end
 
+
 start_date = Date.parse('05-02-2014')
-@date_array = [start_date]
+date_array = [start_date]
 
 def get_dates(date_array)
   end_date = Date.parse('20-03-2014')
@@ -68,177 +39,170 @@ def get_dates(date_array)
 
 end
 
-get_dates(@date_array)
-p scope
-
-# def scope(series_hash, date_array)
-#   # SELECT sum('estimate') WHERE type = story and intiative = hawk + AS OF date
-#     project_array = ["cc", "dvip", "bid"]
-#     project_date_constructor = {}
-
-#     date_array.each do |date|
-#       consolidated_points = 0
-#       project_date_constructor[date] ||= {}
-
-#       whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story"
-        
-#         project_array.each do |project|
-#           uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
-
-#           http = Net::HTTP.new(uri.host, uri.port)
-#           request = Net::HTTP::Get.new(uri.request_uri)
-          
-#           request.form_data = {:mql => whole_query}
-#           response = http.request(request)     
-#           body = response.body
-
-#           obj = JSON.parse(body).first
+def get_header_row
+  project_array = ["cc", "dvip", "bid"]
   
-#           consolidated_points += obj["Sum Story Points"].to_i
+  header = ["Date"]
 
-#           project_date_constructor[date] = consolidated_points
-#         end
-#     end
+  project_array.each do |project|
+    whole_query = "SELECT Project"
+    uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Get.new(uri.request_uri)
+    
+    request.form_data = {:mql => whole_query}
+    response = http.request(request)    
+    body = response.body
 
-#     return project_date_constructor
-# end
+    obj = JSON.parse(body)
+    header << obj.first["Project"]
+  end
 
-# def completed_scope(series_hash, date_array)
-#   project_array = ["cc", "dvip", "bid"]
-#     project_date_constructor = {}
+  return header
+end
 
-#     date_array.each do |date|
-#       consolidated_points = 0
-#       project_date_constructor[date] ||= {}
+def scope(series_hash, date_array)
+  # SELECT sum('estimate') WHERE type = story and intiative = hawk + AS OF date
+    project_array = ["cc", "dvip", "bid"]
+    project_date_constructor = {}
 
-#       whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story AND SimpleStatus = 'In Progress'"
+    date_array.each do |date|
+      consolidated_points = 0
+      project_date_constructor[date] ||= {}
+
+      whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story"
         
-#         project_array.each do |project|
-#           uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
+        project_array.each do |project|
+          uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
 
-#           http = Net::HTTP.new(uri.host, uri.port)
-#           request = Net::HTTP::Get.new(uri.request_uri)
+          http = Net::HTTP.new(uri.host, uri.port)
+          request = Net::HTTP::Get.new(uri.request_uri)
           
-#           request.form_data = {:mql => whole_query}
-#           response = http.request(request)     
-#           body = response.body
+          request.form_data = {:mql => whole_query}
+          response = http.request(request)     
+          body = response.body
 
-#           obj = JSON.parse(body).first
+          obj = JSON.parse(body).first
   
-#           consolidated_points += obj["Sum Story Points"].to_i
+          consolidated_points += obj["Sum Story Points"].to_i
 
-#           project_date_constructor[date] = consolidated_points
-#         end
-#     end
+          project_date_constructor[date] = consolidated_points
+        end
+    end
 
-#     return project_date_constructor
-# end
+    return project_date_constructor
+end
 
-# def actual_completed(series_hash, date_array)
-#   project_array = ["cc", "dvip", "bid"]
-#     project_date_constructor = {}
+def completed_scope(series_hash, date_array)
+  project_array = ["cc", "dvip", "bid"]
+    project_date_constructor = {}
 
-#     date_array.each do |date|
-#       consolidated_points = 0
-#       project_date_constructor[date] ||= {}
+    date_array.each do |date|
+      consolidated_points = 0
+      project_date_constructor[date] ||= {}
 
-#       whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story AND SimpleStatus = Done"
+      whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story AND SimpleStatus = 'In Progress'"
         
-#         project_array.each do |project|
-#           uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
+        project_array.each do |project|
+          uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
 
-#           http = Net::HTTP.new(uri.host, uri.port)
-#           request = Net::HTTP::Get.new(uri.request_uri)
+          http = Net::HTTP.new(uri.host, uri.port)
+          request = Net::HTTP::Get.new(uri.request_uri)
           
-#           request.form_data = {:mql => whole_query}
-#           response = http.request(request)     
-#           body = response.body
+          request.form_data = {:mql => whole_query}
+          response = http.request(request)     
+          body = response.body
 
-#           obj = JSON.parse(body).first
+          obj = JSON.parse(body).first
   
-#           consolidated_points += obj["Sum Story Points"].to_i
+          consolidated_points += obj["Sum Story Points"].to_i
 
-#           project_date_constructor[date] = consolidated_points
-#         end
-#     end
+          project_date_constructor[date] = consolidated_points
+        end
+    end
 
-#     return project_date_constructor
-# end
+    return project_date_constructor
+end
+
+def actual_completed(series_hash, date_array)
+  project_array = ["cc", "dvip", "bid"]
+    project_date_constructor = {}
+
+    date_array.each do |date|
+      consolidated_points = 0
+      project_date_constructor[date] ||= {}
+
+      whole_query = "SELECT SUM('Story Points') AS OF '#{date.to_s}' WHERE type=Story AND SimpleStatus = Done"
+        
+        project_array.each do |project|
+          uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
+
+          http = Net::HTTP.new(uri.host, uri.port)
+          request = Net::HTTP::Get.new(uri.request_uri)
+          
+          request.form_data = {:mql => whole_query}
+          response = http.request(request)     
+          body = response.body
+
+          obj = JSON.parse(body).first
+  
+          consolidated_points += obj["Sum Story Points"].to_i
+
+          project_date_constructor[date] = consolidated_points
+        end
+    end
+
+    return project_date_constructor
+end
 
 
-# def construct_final_array(header_row, data)
-#   header = ["Date", "Scope", "Completed Scope", "Actual Scope"]
-#   first_row = ["2014-02-01", 0, 0, 0]
-#   keys = data.first.keys
-#   new_arrs = keys.map {|k| [k] + data.map {|h| h[k]}}
-#   new_arrs.unshift(header, first_row)
-#   return new_arrs
-# end
+def construct_final_array(header_row, data)
+  header = ["Date", "Scope", "Completed Scope", "Actual Scope"]
+  first_row = ["2014-02-01", 0, 0, 0]
+  keys = data.first.keys
+  new_arrs = keys.map {|k| [k] + data.map {|h| h[k]}}
+  new_arrs.unshift(header, first_row)
+  return new_arrs
+end
 
 
-# def render_chart(arr)
-#   %{
-#     <div id="chart_div" style="width: 900px; height: 500px;"></div>
-#     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-#     <script type="text/javascript">
+def render_chart(arr)
+  %{
+    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
 
-#       var rubyData = #{arr};
+      var rubyData = #{arr};
     
 
-#       google.load("visualization", "1", {packages:["corechart"]});
-#       google.setOnLoadCallback(drawChart);
-#       function drawChart() {
-#         var data = google.visualization.arrayToDataTable( rubyData );
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable( rubyData );
 
-#         var options = {
-#           title: 'Consolidated Burn Up',
-#           trendlines: { 0: {} }
-#         };
+        var options = {
+          title: 'Consolidated Burn Up',
+          trendlines: { 0: {} }
+        };
 
-#         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-#         chart.draw(data, options);
-#       }
-#     </script>
-#   }
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+  }
 
-# end
+end
 
-# header = get_header_row
-# dates = get_dates(date_array)
-# scope = scope(header, dates)
-# completed_scope = completed_scope(header, dates)
-# actual = actual_completed(header, dates)
+header = get_header_row
+dates = get_dates(date_array)
+scope = scope(header, dates)
+completed_scope = completed_scope(header, dates)
+actual = actual_completed(header, dates)
 
-# alldata = scope, completed_scope, actual
-# final_array = construct_final_array(header, alldata)
+alldata = scope, completed_scope, actual
+final_array = construct_final_array(header, alldata)
 
-# render_chart(final_array)
-
-
-
-
-
-# def get_header_row
-#   project_array = ["cc", "dvip", "bid"]
-  
-#   header = ["Date"]
-
-#   project_array.each do |project|
-#     whole_query = "SELECT Project"
-#     uri = URI.parse("http://sbarnekow:p@localhost:8080/api/v2/projects/#{project}/cards/execute_mql.json")
-#     http = Net::HTTP.new(uri.host, uri.port)
-#     request = Net::HTTP::Get.new(uri.request_uri)
-    
-#     request.form_data = {:mql => whole_query}
-#     response = http.request(request)    
-#     body = response.body
-
-#     obj = JSON.parse(body)
-#     header << obj.first["Project"]
-#   end
-
-#   return header
-# end
+render_chart(final_array)
 
 # def retrieve_data(query, date_array, project_array)    
 #   # we want three things: total scope, completed scope, total of query
