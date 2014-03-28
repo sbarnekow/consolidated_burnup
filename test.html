@@ -1,24 +1,56 @@
 <HTML><head></head><body>
 
-    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+	      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+	      
+
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
+    function drawChart() {
+    var data = google.visualization.arrayToDataTable([
+      ['Day', 'Completed Scope', 'Total Scope'],
+        [new Date(2014, 0, 01),  0, 0],
+      [new Date(2014, 0, 02),  5, 10],
+        [new Date(2014, 0, 03),  7, 30],
+        [new Date(2014, 0, 04),  7, 50],
+        [new Date(2014, 0, 05),  9, 60],
+        [new Date(2014, 0, 06),  10, 60],
+        [new Date(2014, 0, 07),  10, 60],
+        [new Date(2014, 0, 08),  11, 60],
+        [new Date(2014, 0, 09),  11, 60],
+        [new Date(2014, 0, 10),  12, 60],
+        [new Date(2014, 0, 11),  13, 60],
+        [new Date(2014, 0, 12),  17, 60],
+        [new Date(2014, 0, 13),  17, 60],
+        [new Date(2014, 0, 14),  19, 60],
+      [new Date(2014, 0, 15),  20, 60],
+        [new Date(2014, 0, 16),  20, 60],
+        [new Date(2014, 0, 17),  20, 60],
+        [new Date(2014, 0, 18),  22, 60],
+        [new Date(2014, 0, 19),  23, 60],
+        [new Date(2014, 0, 20),  24, 60],
+        [new Date(2014, 0, 21),  24, 60],
+        [new Date(2014, 0, 22),  24, 60],
+        [new Date(2014, 0, 23),  28, 60],
+        [new Date(2014, 0, 24),  28, 60],
+        [new Date(2014, 0, 25),  29, 60],
+        [new Date(2014, 0, 26),  30, 60],
+        [new Date(2014, 0, 27),  40, 60],
+        [new Date(2014, 0, 28),  50, 60],
+        [new Date(2014, 0, 29),  55, 60],
+        [new Date(2014, 0, 30),  56, 60],
+        [new Date(2014, 0, 31),  57, 60],
+      ]);
 
-      var rubyData = [["Date", "Scope", "Completed Scope", "Actual Scope"], ["2014-02-01", 0, 0, 0], ["2014-02-05", 1807, 181, 942], ["2014-02-10", 1883, 160, 1011], ["2014-02-15", 2000, 248, 1079], ["2014-02-20", 2040, 246, 1141], ["2014-02-25", 2089, 248, 1179], ["2014-03-02", 2152, 214, 1257], ["2014-03-07", 2181, 225, 1274], ["2014-03-12", 2181, 225, 1274], ["2014-03-17", 2181, 225, 1274], ["2014-03-20", 2181, 225, 1274]];
-    
+      var options = {
+      title: '',
+          colors: ['green','black'], 
+      trendlines: { 0: {} }
+      };
 
-      google.load("visualization", "1", {packages:["corechart"]});
-      google.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable( rubyData );
-
-        var options = {
-          title: 'Consolidated Burn Up',
-          trendlines: { 0: {} }
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-      }
+    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+    }
     </script>
-  
+          }

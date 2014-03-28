@@ -1,149 +1,158 @@
-
-  # given parameters
-  #  - project
-  #  - card
-  #  - count related story points via MQL
-  # api call 
-  #   - see if *status* date is set 
-  #   - if it is, execute MQL
-  #   - plot results of MQL corresponding to date on chart
-
 class ConsolidatedBurnupChart
-  require 'json'
+require 'pp'
 
   def initialize(parameters, project, current_user)
     @parameters = parameters
     @project = project
     @current_user = current_user
+    @series_info = {}
+    @date_array = []
+  end
+
+  def get_dates
+    start_date = Date.parse(@parameters['start-date'])
+    end_date = Date.parse(@parameters['end-date'])
+    start_date.step(end_date, step = @parameters['x-label-step']){ |date|
+      @date_array << date
+    }
+    return @date_array
+  end
+
+  def format_parameters
+    @parameters['series'].each do |project|
+      @series_info[project['project']] = {
+        :total_scope_query => project['total-scope-query'], 
+        :completed_scope_query => project['completed-scope-query'], 
+        }
+    end
+    return @series_info
+  end
+
+  def define_statements
+    project_array = @series_info.keys.sort!
+    dates = @date_array.sort!
+
+      project_query_constructor = {}
+
+      project_array.each do |project|
+        project_query_constructor[project] ||= {} 
+        dated_query_array = []
+        @series_info[project].each do |query|
+            dates.each do |date|
+              dated_query_array << query[1].split(/where/).insert(1, "AS OF '#{date}' WHERE").join
+            end
+        end
+
+        project_query_constructor[project] = dated_query_array 
+      end
+
+    return project_query_constructor
+  end
+
+
+  def get_scope(project_query_hash)
+    completed_queries = []
+    counter = 0
+
+      project_query_hash.each do |key, query_array|
+        uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{key}/cards/execute_mql.json")
+
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        value_array = []
+
+        query_array.each do |query|
+          request.form_data = {:mql => query}
+          response = http.request(request)     
+          body = response.body
+          obj = JSON.parse(body).first.values
+     
+          query_value = obj[0].to_i
+          value_array << query_value
+        end
+
+        completed_queries << value_array
+      end
+
+      reduced_query = completed_queries.transpose.map! {|x| x.reduce(:+)}
+
+      return reduced_query
+  end
+
+  def construct_final(query_results)
+    query_categories = [:total_scope_query, :completed_scope_query]
+    queries_by_date = query_results.each_slice(@date_array.length).to_a
+    header = ["Date", "Total Scope", "Completed Scope"]
+
+    initial_arr = @date_array.map{|date| [date]}
+
+    queries_arr = queries_by_date.transpose
+
+    final_arr = initial_arr.zip(queries_arr)
+
+    final_arr.each do |x|
+      x.flatten!
+    end
+
+    final_arr.unshift(header)
+    
+    return final_arr
   end
 
   def execute
-    data_to_render = retrieve_data
-    render_chart(data_to_render)
-  end
-
-  def render_chart(render_this)
     %{
-        <div id="chart_div2" style="width: 900px; height: 500px;"> #{ @parameters } </div>
-        <div id="chart_div" style="width: 900px; height: 500px;"></div>
-        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-        <script type="text/javascript">
+
+      <div>
+        #{pp format_parameters}
+        <p>
+        #{pp get_dates}
+        <p>
+        #{pp define_statements}
+        <p>
+        #{pp get_scope(define_statements)}
+        <p>
+        #{pp construct_final(get_scope(define_statements))}
+        <p>
+      </div>
+
+
+      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      
+      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+      <script type="text/javascript">
+      
         google.load("visualization", "1", {packages:["corechart"]});
         google.setOnLoadCallback(drawChart);
+        
+    
         function drawChart() {
-          var data = google.visualization.arrayToDataTable( #{render_this.to_json} );
+          var dataArray = #{construct_final(get_scope(define_statements)).to_json}
+          
+          console.log(dataArray)
+
+          for (var i = 1; i<dataArray.length; i++){
+              dataArray[i][0] = dataArray[i][0].replace(dataArray[i][0], new Date(dataArray[i][0]))
+            }
+
+          console.log(dataArray)
+
+          var data = google.visualization.arrayToDataTable(dataArray);
+
+          console.log(data)
 
           var options = {
-            title: 'Test Chart',
-            trendlines: { 0: {} }
+            title: 'Consolidated Burn Up',
+            trendlines: { 1: {} } 
           };
 
           var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
           chart.draw(data, options);
-          }
+        }
       </script>
+
     }
   end
 
-  def retrieve_data
-    return data_array = [
-          ['Year', 'Sales'],
-          ['1/1/2014',  1000],
-          ['1/2/2014',  1170],
-          ['1/3/2014',  660],
-          ['1/4/2014',  1030]
-        ]
-  end
-
-   # <div id="chart_div" style="width: 900px; height: 500px;"></div>
-    #   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    #   <script type="text/javascript">
-    #     google.load("visualization", "1", {packages:["corechart"]});
-    #     google.setOnLoadCallback(drawChart);
-    #     function drawChart() {
-    #       var data = google.visualization.arrayToDataTable([
-    #         ['Day', 'Amount'],
-    #         [new Date(2014, 1, 09),  0],
-    #         [new Date(2014, 1, 10),  1000],
-    #         [new Date(2014, 1, 11),  1170],
-    #         [new Date(2014, 1, 12),  1220],
-    #         [new Date(2014, 1, 13),  1300]
-    #       ]);
-
-    #       var options = {
-    #         title: 'Test Chart',
-    #         trendlines: { 0: {} }
-    #       };
-
-    #       var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    #       chart.draw(data, options);
-    #       }
-    #   </script>
-
-  # def render_chart(data_array)
-  #   # <div id="chart_div" style="width: 900px; height: 500px;"></div>
-  #   #   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-  #   #   <script type="text/javascript">
-  #   #     google.load("visualization", "1", {packages:["corechart"]});
-  #   #     google.setOnLoadCallback(drawChart);
-  #   #     function drawChart() {
-  #   #       var data = google.visualization.arrayToDataTable([
-  #   #         ['Day', 'Amount'],
-  #   #         [new Date(2014, 1, 09),  0],
-  #   #         [new Date(2014, 1, 10),  1000],
-  #   #         [new Date(2014, 1, 11),  1170],
-  #   #         [new Date(2014, 1, 12),  1220],
-  #   #         [new Date(2014, 1, 13),  1300]
-  #   #       ]);
-
-  #   #       var options = {
-  #   #         title: 'Test Chart',
-  #   #         trendlines: { 0: {} }
-  #   #       };
-
-  #   #       var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-  #   #       chart.draw(data, options);
-  #   #       }
-  #   #   </script>
-
-  #   %{
-  #      <div id="chart_div" style="width: 900px; height: 500px;"></div>
-  #     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-  #     <script type="text/javascript">
-  #       google.load("visualization", "1", {packages:["corechart"]});
-  #       google.setOnLoadCallback(drawChart);
-  #       function drawChart() {
-  #         var data = google.visualization.arrayToDataTable(
-  #               #{retrieve_data}
-  #             );
-
-  #         var options = {
-  #           title: 'Test Chart',
-  #           trendlines: { 0: {} }
-  #         };
-
-  #         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-  #         chart.draw(data, options);
-  #         }
-  #     </script>
-  #   }
-  # end
-
-  # def retrieve_data
-  #   return data_array = [
-  #       ['Day', 'Amount'],
-  #       [new Date(2014, 1, 09),  0],
-  #       [new Date(2014, 1, 10),  1000],
-  #       [new Date(2014, 1, 11),  1170],
-  #       [new Date(2014, 1, 12),  1220],
-  #       [new Date(2014, 1, 13),  1300]
-  #       ]
-  # end
-
-  
-  # def can_be_cached?
-  #   false  # if appropriate, switch to true once you move your macro to production
-  # end
     
 end
-
