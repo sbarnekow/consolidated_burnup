@@ -85,7 +85,7 @@ require 'pp'
     queries_by_date = query_results.each_slice(@date_array.length).to_a
     header = ["Date", "Total Scope", "Completed Scope"]
 
-    initial_arr = @date_array.map{|date| [date]}
+    initial_arr = @date_array.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
 
     queries_arr = queries_by_date.transpose
 
@@ -103,47 +103,33 @@ require 'pp'
   def execute
     %{
 
-      <div>
-        #{pp format_parameters}
-        <p>
-        #{pp get_dates}
-        <p>
-        #{pp define_statements}
-        <p>
-        #{pp get_scope(define_statements)}
-        <p>
-        #{pp construct_final(get_scope(define_statements))}
-        <p>
-      </div>
-
-
       <div id="chart_div" style="width: 900px; height: 500px;"></div>
       
       <script type="text/javascript" src="https://www.google.com/jsapi"></script>
       <script type="text/javascript">
-      
+        debugger;
         google.load("visualization", "1", {packages:["corechart"]});
         google.setOnLoadCallback(drawChart);
-        
-    
+      
         function drawChart() {
-          var dataArray = #{construct_final(get_scope(define_statements)).to_json}
-          
-          console.log(dataArray)
+          var dataArray = #{construct_final(get_scope(define_statements)).to_json};
 
-          for (var i = 1; i<dataArray.length; i++){
-              dataArray[i][0] = dataArray[i][0].replace(dataArray[i][0], new Date(dataArray[i][0]))
-            }
+          console.log(dataArray);
 
-          console.log(dataArray)
+          for(var i=1; i>dataArray.length; i++){
+            debugger;
+            var dateSetUp = dataArray[i].splice(0,3);
+            var dateObject = new Date(dateSetUp);
+            dataArray[i].unshift(dateObject);
+          };
+
+          console.log(dataArray);
 
           var data = google.visualization.arrayToDataTable(dataArray);
 
-          console.log(data)
-
           var options = {
             title: 'Consolidated Burn Up',
-            trendlines: { 1: {} } 
+            trendlines: { 0: {} }
           };
 
           var chart = new google.visualization.LineChart(document.getElementById('chart_div'));

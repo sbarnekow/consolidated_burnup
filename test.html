@@ -1,56 +1,37 @@
 <HTML><head></head><body>
 
-	      <div id="chart_div" style="width: 900px; height: 500px;"></div>
-	      
 
-    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-    google.load("visualization", "1", {packages:["corechart"]});
-    google.setOnLoadCallback(drawChart);
-    function drawChart() {
-    var data = google.visualization.arrayToDataTable([
-      ['Day', 'Completed Scope', 'Total Scope'],
-        [new Date(2014, 0, 01),  0, 0],
-      [new Date(2014, 0, 02),  5, 10],
-        [new Date(2014, 0, 03),  7, 30],
-        [new Date(2014, 0, 04),  7, 50],
-        [new Date(2014, 0, 05),  9, 60],
-        [new Date(2014, 0, 06),  10, 60],
-        [new Date(2014, 0, 07),  10, 60],
-        [new Date(2014, 0, 08),  11, 60],
-        [new Date(2014, 0, 09),  11, 60],
-        [new Date(2014, 0, 10),  12, 60],
-        [new Date(2014, 0, 11),  13, 60],
-        [new Date(2014, 0, 12),  17, 60],
-        [new Date(2014, 0, 13),  17, 60],
-        [new Date(2014, 0, 14),  19, 60],
-      [new Date(2014, 0, 15),  20, 60],
-        [new Date(2014, 0, 16),  20, 60],
-        [new Date(2014, 0, 17),  20, 60],
-        [new Date(2014, 0, 18),  22, 60],
-        [new Date(2014, 0, 19),  23, 60],
-        [new Date(2014, 0, 20),  24, 60],
-        [new Date(2014, 0, 21),  24, 60],
-        [new Date(2014, 0, 22),  24, 60],
-        [new Date(2014, 0, 23),  28, 60],
-        [new Date(2014, 0, 24),  28, 60],
-        [new Date(2014, 0, 25),  29, 60],
-        [new Date(2014, 0, 26),  30, 60],
-        [new Date(2014, 0, 27),  40, 60],
-        [new Date(2014, 0, 28),  50, 60],
-        [new Date(2014, 0, 29),  55, 60],
-        [new Date(2014, 0, 30),  56, 60],
-        [new Date(2014, 0, 31),  57, 60],
-      ]);
+      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      
+      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+      <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        google.setOnLoadCallback(drawChart);
+      
+      	function formatDates(){
+      		 var dataArray = [["Date", "Total Scope", "Completed Scope", "Actual Completed"], [2014, 2, 1, 0, 0, 12], [2014, 2, 16, 0, 0, 84], [2014, 3, 3, 0, 0, 124], [2014, 3, 18, 0, 0, 124], [2014, 4, 2, 0, 0, 124], [2014, 4, 17, 0, 0, 124]];
 
-      var options = {
-      title: '',
-          colors: ['green','black'], 
-      trendlines: { 0: {} }
-      };
+      		 for(var i=1; i < dataArray.length; i++){
+	            var dateSetUp = dataArray[i].splice(0,3);
+	            var dateObject = new Date(dateSetUp);
+	            dataArray[i].unshift(dateObject);
+	          };
+	          
+	          return dataArray
+      	};
 
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-    }
-    </script>
-          }
+        function drawChart() {
+          console.log(formatDates());
+          var data = google.visualization.arrayToDataTable( formatDates() );
+
+          var options = {
+            title: 'Consolidated Burn Up',
+            trendlines: { 2: {} }
+          };
+
+          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+          chart.draw(data, options);
+        }
+      </script>
+
+    

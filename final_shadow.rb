@@ -25,7 +25,7 @@ require 'pp'
 
 	def get_dates
 	    start_date = Date.parse("01-02-2014")
-	    end_date = Date.parse("01-04-2014")
+	    end_date = Date.parse("01-05-2014")
 	    date_array = []
 	    start_date.step(end_date, step = 15){ |date|
 	      date_array << date
@@ -99,7 +99,7 @@ require 'pp'
 		queries_by_date = query_results.each_slice(dates.length).to_a
 		header = ["Date", "Total Scope", "Completed Scope", "Actual Completed"]
 
-		initial_arr = dates.map{|date| [date.to_s]}
+		p initial_arr = dates.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
 
 		queries_arr = queries_by_date.transpose
 
@@ -111,28 +111,77 @@ require 'pp'
 
 		final_arr.unshift(header)
 		
-		return final_arr
+		p final_arr
 	end
 
 	final_data = construct_final(dates, scope)
 
 	def render_chart(arr)
-	  %{
-	      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+		%{
+
+      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      
+      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+      <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        google.setOnLoadCallback(drawChart);
+      
+      	function formatDates(){
+      		 var dataArray = #{arr};
+
+      		 for(var i=1; i < dataArray.length; i++){
+	            var dateSetUp = dataArray[i].splice(0,3);
+	            var dateObject = new Date(dateSetUp);
+	            dataArray[i].unshift(dateObject);
+	          };
+
+	          return dataArray
+      	};
+
+        function drawChart() {
+          var data = google.visualization.arrayToDataTable( formatDates() );
+
+          var options = {
+            title: 'Consolidated Burn Up',
+            trendlines: { 2: {} }
+          };
+
+          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+          chart.draw(data, options);
+        }
+      </script>
+
+    }
+
+	  # %{
+	  #     <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      
+	  #     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	  #     <script type="text/javascript">
 	      
-	      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-	      <script type="text/javascript">
-	        var arr = #{arr}
+	  #       google.load("visualization", "1", {packages:["corechart"]});
+	  #       google.setOnLoadCallback(drawChart);
+	        
+	    
+	  #       function drawChart() {
+	  #         var dataArray = #{arr.to_json}
 
-	        console.log(arr)
+	  #         console.log(dataArray)
 
-	        for (var i = 1; i<arr.length; i++){
-           		console.log(arr[i][0] = arr[i][0].replace(arr[i][0], new Date(arr[i][0])))
-          	}
+	  #         var data = google.visualization.arrayToDataTable(dataArray);
 
-          	console.log(arr)
-	      </script>
-	  }
+	  #         console.log(data)
+
+	  #         var options = {
+	  #           title: 'Consolidated Burn Up',
+	  #           trendlines: { 0: {} } 
+	  #         };
+
+	  #         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+	  #         chart.draw(data, options);
+	  #       }
+	  #     </script>
+	  # }
 
 	end
 
