@@ -1,5 +1,4 @@
 class ConsolidatedBurnupChart
-require 'pp'
 
   def initialize(parameters, project, current_user)
     @parameters = parameters
@@ -103,41 +102,54 @@ require 'pp'
   def execute
     %{
 
+      <div>
+      <p>
+      get dates: #{get_dates.inspect}
+      <p>
+      format params: #{format_parameters.inspect}
+      <p>
+      define_statements: #{define_statements.inspect}
+      <p> 
+      get scope: #{get_scope(define_statements).inspect}
+      <p>
+      final array: #{construct_final(get_scope(define_statements)).inspect}
+      </div>
+
       <div id="chart_div" style="width: 900px; height: 500px;"></div>
       
       <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-      <script type="text/javascript">
-        debugger;
+      <script type="text/javascript"> 
         google.load("visualization", "1", {packages:["corechart"]});
         google.setOnLoadCallback(drawChart);
-      
-        function drawChart() {
-          var dataArray = #{construct_final(get_scope(define_statements)).to_json};
 
-          console.log(dataArray);
-
-          for(var i=1; i>dataArray.length; i++){
-            debugger;
+        function formatDates() {
+         var dataArray = #{construct_final(get_scope(define_statements)).to_json};
+         console.log(dataArray)
+         for(var i=1; i < dataArray.length; i++){
             var dateSetUp = dataArray[i].splice(0,3);
             var dateObject = new Date(dateSetUp);
             dataArray[i].unshift(dateObject);
           };
+          return(dataArray);
+        };
 
-          console.log(dataArray);
-
-          var data = google.visualization.arrayToDataTable(dataArray);
-
+        function drawChart() {
+          var data = google.visualization.arrayToDataTable( formatDates() );
           var options = {
             title: 'Consolidated Burn Up',
-            trendlines: { 0: {} }
+            trendlines: { 0:{},
+                          1: {},
+                          2: {} }
           };
 
           var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
           chart.draw(data, options);
-        }
+        };
+      
       </script>
 
     }
+    
   end
 
     

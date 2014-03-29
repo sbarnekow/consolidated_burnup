@@ -202,6 +202,8 @@ actual = actual_completed(header, dates)
 alldata = scope, completed_scope, actual
 final_array = construct_final_array(header, alldata)
 
+p final_array.to_json
+
 render_chart(final_array)
 
 # def retrieve_data(query, date_array, project_array)    

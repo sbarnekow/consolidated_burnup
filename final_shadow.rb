@@ -111,7 +111,7 @@ require 'pp'
 
 		final_arr.unshift(header)
 		
-		p final_arr
+		return final_arr
 	end
 
 	final_data = construct_final(dates, scope)
@@ -127,20 +127,23 @@ require 'pp'
         google.setOnLoadCallback(drawChart);
       
       	function formatDates(){
-      		 var dataArray = #{arr};
+      		debugger;
+      		var dataArray = #{arr};
 
       		 for(var i=1; i < dataArray.length; i++){
 	            var dateSetUp = dataArray[i].splice(0,3);
 	            var dateObject = new Date(dateSetUp);
 	            dataArray[i].unshift(dateObject);
 	          };
-
-	          return dataArray
+	          console.log(dataArray)
+	          var stringfifiedArr = JSON.stringify(dataArray)
+	          console.log(stringfifiedArr)
+	          return stringfifiedArr
       	};
 
         function drawChart() {
           var data = google.visualization.arrayToDataTable( formatDates() );
-
+          console.log(formatDates())
           var options = {
             title: 'Consolidated Burn Up',
             trendlines: { 2: {} }
