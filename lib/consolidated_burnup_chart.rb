@@ -1,4 +1,5 @@
 class ConsolidatedBurnupChart
+  require 'pp'
 
   def initialize(parameters, project, current_user)
     @parameters = parameters
@@ -6,12 +7,15 @@ class ConsolidatedBurnupChart
     @current_user = current_user
     @series_info = {}
     @date_array = []
+    @chart_height = @parameters['height'] || '500px'
+    @chart_width = @parameters['width'] || '900px'
+    @y_axis_label = @parameters['y-axis-label'] || ""
   end
 
   def get_dates
     start_date = Date.parse(@parameters['start-date'])
     end_date = Date.parse(@parameters['end-date'])
-    start_date.step(end_date, step = @parameters['x-label-step']){ |date|
+    start_date.step(end_date, step = @parameters['x-label-step'].to_i){ |date|
       @date_array << date
     }
     return @date_array
@@ -100,22 +104,14 @@ class ConsolidatedBurnupChart
   end
 
   def execute
+
     %{
+      #{pp get_dates}
+      #{pp format_parameters}
+      #{pp define_statements}
+      #{pp scope = get_scope(define_statements)}
 
-      <div>
-      <p>
-      get dates: #{get_dates.inspect}
-      <p>
-      format params: #{format_parameters.inspect}
-      <p>
-      define_statements: #{define_statements.inspect}
-      <p> 
-      get scope: #{get_scope(define_statements).inspect}
-      <p>
-      final array: #{construct_final(get_scope(define_statements)).inspect}
-      </div>
-
-      <div id="chart_div" style="width: 900px; height: 500px;"></div>
+      <div id="chart_div" style="width: #{@chart_width}; height: #{@chart_height};"></div>
       
       <script type="text/javascript" src="https://www.google.com/jsapi"></script>
       <script type="text/javascript"> 
@@ -123,8 +119,7 @@ class ConsolidatedBurnupChart
         google.setOnLoadCallback(drawChart);
 
         function formatDates() {
-         var dataArray = #{construct_final(get_scope(define_statements)).to_json};
-         console.log(dataArray)
+         var dataArray = #{construct_final(scope).to_json};
          for(var i=1; i < dataArray.length; i++){
             var dateSetUp = dataArray[i].splice(0,3);
             var dateObject = new Date(dateSetUp);
@@ -137,9 +132,7 @@ class ConsolidatedBurnupChart
           var data = google.visualization.arrayToDataTable( formatDates() );
           var options = {
             title: 'Consolidated Burn Up',
-            trendlines: { 0:{},
-                          1: {},
-                          2: {} }
+            trendlines: { 1: {} }
           };
 
           var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
