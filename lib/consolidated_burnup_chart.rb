@@ -106,10 +106,10 @@ class ConsolidatedBurnupChart
   def execute
 
     %{
-      #{pp get_dates}
-      #{pp format_parameters}
-      #{pp define_statements}
-      #{pp scope = get_scope(define_statements)}
+      #{get_dates}
+      #{format_parameters}
+      #{define_statements}
+      #{scope = get_scope(define_statements)}
 
       <div id="chart_div" style="width: #{@chart_width}; height: #{@chart_height};"></div>
       

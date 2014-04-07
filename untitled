@@ -1,0 +1,9 @@
+ pp project_array = series_hash.keys.sort!
+ pp dates = date_array.sort!
+ pp project_query_constructor
+ pp completed_queries
+ pp reduced_query = completed_queries.transpose.map! {|x| x.reduce(:+)}
+ pp initial_arr = dates.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
+ pp queries_arr = queries_by_date.transpose
+ pp final_arr = initial_arr.zip(queries_arr)
+ pp final_arr
