@@ -34,7 +34,7 @@ def compose_date_array
 end
 
 compose_date_array
-pp @date_array
+# pp @date_array
 
 def add_date_to_query
 	dates = @date_array.sort!
@@ -54,115 +54,72 @@ def add_date_to_query
 end
 
 add_date_to_query
-pp @series
+# pp @series
 
 def get_scope_values
 	@series.each do |project|
 
-		uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project[:project]}/cards/execute_mql.json")
+		uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project[:project_name]}/cards/execute_mql.json")
+
+		project.shift
 
 		http = Net::HTTP.new(uri.host, uri.port)
 		request = Net::HTTP::Get.new(uri.request_uri)
 	    
-	
-		request.form_data = {:mql => query}
-		response = http.request(request)     
-		body = response.body
-		obj = JSON.parse(body).first.values
+	    returned_value_array = []
 
-		query_value = obj[0].to_i
+
+	    project[:total_scope_query].map! do |query|
+
+			request.form_data = {:mql => query}
+			response = http.request(request)     
+			body = response.body
+			
+			returned_value = JSON.parse(body).first.values
+			
+			query = returned_value[0].to_i
+		end
+
+		project[:completed_scope_query].map! do |query|
+
+			request.form_data = {:mql => query}
+			response = http.request(request)     
+			body = response.body
+			
+			returned_value = JSON.parse(body).first.values
+			
+			query = returned_value[0].to_i
+		end
 
 	end
+
 end
+
+get_scope_values
+# pp @series
 
 
 def consolidate_scope_data
+	final_data_structure = []
+	total_scope_queries = []
+	completed_scope_queries = []
+
+	@series.each do |query|
+		total_scope_queries << query[:total_scope_query]
+		completed_scope_queries << query[:completed_scope_query]
+	end
+
+	final_data_structure << total_scope_queries.transpose.map! {|x| x.reduce(:+)}
+	final_data_structure << completed_scope_queries.transpose.map! {|x| x.reduce(:+)}
+	pp final_data_structure
 end
+
+consolidate_scope_data
 
 def construct_final_array
 end
 
 
-
-
-
-
-
-
-
-
-
-
-def define_statements(series_hash, date_array)
-   # sort the project array alphabetically to protect it from arbitrary order
-   project_array = series_hash.keys.sort!
-   # sort the date array for the same reason
-   dates = date_array.sort!
-
-   project_query_constructor = {}
-
-  	# for each project, create a new constructor hash and an empty array for the newly formed queries
-  	project_array.each do |project|
-  		project_query_constructor[project] ||= {} 
-		dated_query_array = []
-		# take the series object and for each date in the date array, split on "where" and insert the date statement
-		series_hash[project].each do |query|
-    		dates.each do |date|
-	    		dated_query_array << query[1].split(/where/).insert(1, "AS OF '#{date}' WHERE").join
-	    	end
-	    end
-	    # match the project names to their respective the dated querys
-	    project_query_constructor[project] = dated_query_array 
-	end
-
-	return project_query_constructor
-end
-
-# constructed_queries = define_statements(series_info, dates)
-
-
-# def get_scope(project_query_hash)
-#  	completed_queries = []
-#     counter = 0
-
-#     project_query_hash.each do |key, query_array|
-
-#     	uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{key}/cards/execute_mql.json")
-
-#     	http = Net::HTTP.new(uri.host, uri.port)
-#     	request = Net::HTTP::Get.new(uri.request_uri)
-
-#     	value_array = []
-
-#     	# takes each constructed query and makes the GET request based on the MQL statement, storing each response in an array
-#     	# that response array is then pushed to a bigger value array, completed_queries
-# 	    query_array.each do |query|
-# 	      request.form_data = {:mql => query}
-# 	      response = http.request(request)     
-# 	      body = response.body
-# 	      obj = JSON.parse(body).first.values
-	 
-# 	      query_value = obj[0].to_i
-# 	      value_array << query_value
-# 	  	end
-	  	
-# 	  completed_queries << value_array
-
-#     end
-
-#    # completed_queries is an array composed of an array of mql values for each series
-#    # each array will be the same length and then transposed at the same indices so that 
-#    # each date's query for either :total_scope_query and :completed_scope_query will be contained within the same array 
-#    # for each item in completed_queries (an array for each date and corresponding query type) 
-#    # map adds all of the items in the array together with x.reduce(:+)
-#    # thus resulting in the reduced array titled reduced_query
-
-#    reduced_query = completed_queries.transpose.map! {|x| x.reduce(:+)}
-   
-#    return reduced_query
-# end
-
-# scope = get_scope(constructed_queries)
 
 
 # def construct_final(dates, query_results)
