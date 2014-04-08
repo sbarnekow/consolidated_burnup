@@ -5,7 +5,7 @@ class ConsolidatedBurnupChart
     @parameters = parameters
     @project = project
     @current_user = current_user
-    @series_info = {}
+    @series_info = []
     @date_array = []
     @chart_height = @parameters['height'] || '500px'
     @chart_width = @parameters['width'] || '900px'
@@ -18,17 +18,15 @@ class ConsolidatedBurnupChart
     start_date.step(end_date, step = @parameters['x-label-step'].to_i){ |date|
       @date_array << date
     }
-    return @date_array
   end
 
   def format_parameters
     @parameters['series'].each do |project|
-      @series_info[project['project']] = {
+     {  :project_name => project['project']
         :total_scope_query => project['total-scope-query'], 
         :completed_scope_query => project['completed-scope-query'], 
-        }
+     }
     end
-    return @series_info
   end
 
   def define_statements
@@ -53,11 +51,12 @@ class ConsolidatedBurnupChart
   end
 
 
-  def get_scope(project_query_hash)
+  def get_scope
+    project_queries = define_statements
     completed_queries = []
     counter = 0
 
-      project_query_hash.each do |key, query_array|
+      project_queries.each do |key, query_array|
         uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{key}/cards/execute_mql.json")
 
         http = Net::HTTP.new(uri.host, uri.port)
@@ -88,28 +87,28 @@ class ConsolidatedBurnupChart
     queries_by_date = query_results.each_slice(@date_array.length).to_a
     header = ["Date", "Total Scope", "Completed Scope"]
 
-    initial_arr = @date_array.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
+    js_structured_dates = @date_array.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
 
-    queries_arr = queries_by_date.transpose
+    js_structured_data = queries_by_date.transpose
 
-    final_arr = initial_arr.zip(queries_arr)
+    js_structured_array = js_structured_dates.zip(js_structured_data)
 
-    final_arr.each do |x|
+    js_structured_array.each do |x|
       x.flatten!
     end
 
-    final_arr.unshift(header)
+    js_structured_array.unshift(header)
     
-    return final_arr
+    return js_structured_array
   end
 
   def execute
-
+     get_dates
+     format_parameters
+     define_statements
+     scope = get_scope(define_statements)
     %{
-      #{get_dates}
-      #{format_parameters}
-      #{define_statements}
-      #{scope = get_scope(define_statements)}
+     
 
       <div id="chart_div" style="width: #{@chart_width}; height: #{@chart_height};"></div>
       
