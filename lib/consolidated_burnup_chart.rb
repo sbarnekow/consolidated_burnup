@@ -22,91 +22,103 @@ class ConsolidatedBurnupChart
 
   def format_parameters
     @parameters['series'].each do |project|
-     {  :project_name => project['project']
+     @series_info << {  :project_name => project['project'],
         :total_scope_query => project['total-scope-query'], 
         :completed_scope_query => project['completed-scope-query'], 
      }
     end
   end
 
-  def define_statements
-    project_array = @series_info.keys.sort!
+  def add_date_to_query
     dates = @date_array.sort!
 
-      project_query_constructor = {}
-
-      project_array.each do |project|
-        project_query_constructor[project] ||= {} 
-        dated_query_array = []
-        @series_info[project].each do |query|
-            dates.each do |date|
-              dated_query_array << query[1].split(/where/).insert(1, "AS OF '#{date}' WHERE").join
-            end
-        end
-
-        project_query_constructor[project] = dated_query_array 
+    @series_info.each do |series|
+      dated_total_scope_queries = []
+      dated_completed_scope_queries = []
+      
+      dates.each do |date|
+        dated_total_scope_queries << series[:total_scope_query].split(/where/).insert(1, "AS OF '#{date}' WHERE").join
+        dated_completed_scope_queries << series[:completed_scope_query].split(/where/).insert(1, "AS OF '#{date}' WHERE").join
       end
 
-    return project_query_constructor
+      series[:total_scope_query] = dated_total_scope_queries
+      series[:completed_scope_query] = dated_completed_scope_queries
+    end
   end
 
 
-  def get_scope
-    project_queries = define_statements
-    completed_queries = []
-    counter = 0
+  def get_scope_values
+    @series_info.each do |project|
 
-      project_queries.each do |key, query_array|
-        uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{key}/cards/execute_mql.json")
+      uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project[:project_name]}/cards/execute_mql.json")
 
-        http = Net::HTTP.new(uri.host, uri.port)
-        request = Net::HTTP::Get.new(uri.request_uri)
+      project.shift
 
-        value_array = []
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+        
+      returned_value_array = []
 
-        query_array.each do |query|
-          request.form_data = {:mql => query}
-          response = http.request(request)     
-          body = response.body
-          obj = JSON.parse(body).first.values
-     
-          query_value = obj[0].to_i
-          value_array << query_value
-        end
 
-        completed_queries << value_array
+      project[:total_scope_query].map! do |query|
+
+        request.form_data = {:mql => query}
+        response = http.request(request)     
+        body = response.body
+        
+        returned_value = JSON.parse(body).first.values
+        
+        query = returned_value[0].to_i
       end
 
-      reduced_query = completed_queries.transpose.map! {|x| x.reduce(:+)}
+      project[:completed_scope_query].map! do |query|
 
-      return reduced_query
+        request.form_data = {:mql => query}
+        response = http.request(request)     
+        body = response.body
+        
+        returned_value = JSON.parse(body).first.values
+        
+        query = returned_value[0].to_i
+      end
+
+    end
   end
 
-  def construct_final(query_results)
-    query_categories = [:total_scope_query, :completed_scope_query]
-    queries_by_date = query_results.each_slice(@date_array.length).to_a
-    header = ["Date", "Total Scope", "Completed Scope"]
+  def consolidate_scope_data
+    final_data_structure = []
+    total_scope_queries = []
+    completed_scope_queries = []
 
-    js_structured_dates = @date_array.map{|date| date.to_s.split('-').collect{|x| x.to_i}}
-
-    js_structured_data = queries_by_date.transpose
-
-    js_structured_array = js_structured_dates.zip(js_structured_data)
-
-    js_structured_array.each do |x|
-      x.flatten!
+    @series_info.each do |query|
+      total_scope_queries << query[:total_scope_query]
+      completed_scope_queries << query[:completed_scope_query]
     end
 
-    js_structured_array.unshift(header)
-    
-    return js_structured_array
+    final_data_structure << total_scope_queries.transpose.map! {|x| x.reduce(:+)}
+    final_data_structure << completed_scope_queries.transpose.map! {|x| x.reduce(:+)}
+
+    return final_data_structure
+    end
+
+    def construct_final
+      header = ["Date", "Total Scope", "Completed Scope"]
+      @date_array.map! {|date| date.to_s.split('-').collect{|x| x.to_i}}
+     
+      project_data = consolidate_scope_data.transpose
+      dates_and_data = @date_array.zip(project_data)
+      dates_and_data.each {|x| x.flatten!}
+      dates_and_data.unshift(header)
+
+      return dates_and_data
   end
 
   def execute
      get_dates
      format_parameters
-     define_statements
-     scope = get_scope(define_statements)
+     add_date_to_query
+     get_scope_values
+
     %{
      
 
@@ -118,7 +130,7 @@ class ConsolidatedBurnupChart
         google.setOnLoadCallback(drawChart);
 
         function formatDates() {
-         var dataArray = #{construct_final(scope).to_json};
+         var dataArray = #{construct_final.to_json};
          for(var i=1; i < dataArray.length; i++){
             var dateSetUp = dataArray[i].splice(0,3);
             var dateObject = new Date(dateSetUp);
