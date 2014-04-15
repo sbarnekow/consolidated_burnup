@@ -50,13 +50,13 @@ class ConsolidatedBurnupChart
   def get_scope_values
     @series_info.each do |project|
 
-      uri = URI.parse("http://sarah:p@localhost:8080/api/v2/projects/#{project[:project_name]}/cards/execute_mql.json")
+      uri = URI.parse("http://localhost:8080/api/v2/projects/#{project[:project_name]}/cards/execute_mql.json")
 
       project.shift
 
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Get.new(uri.request_uri)
-        
+      request.basic_auth "sarah", "p"
       returned_value_array = []
 
 
